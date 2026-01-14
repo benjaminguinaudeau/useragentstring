@@ -60,10 +60,11 @@ get_browser_links <- function(browser) {
 #' details <- get_useragent_details("/Chrome134.0.6998.166_id_20018.php")
 #' }
 get_useragent_details <- function(detail_url) {
+  base_url <- "https://useragentstring.com"
   url <- if (stringr::str_starts(detail_url, "/")) {
-    paste0(BASE_URL, detail_url)
+    paste0(base_url, detail_url)
   } else {
-    paste0(BASE_URL, "/", detail_url)
+    paste0(base_url, "/", detail_url)
   }
 
   resp <- tryCatch({
