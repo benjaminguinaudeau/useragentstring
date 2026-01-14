@@ -1,6 +1,12 @@
 # useragentstring
 
+<!-- badges: start -->
+[![Update Data](https://github.com/benjaminguinaudeau/useragentstring/actions/workflows/update-data.yml/badge.svg)](https://github.com/benjaminguinaudeau/useragentstring/actions/workflows/update-data.yml)
+<!-- badges: end -->
+
 R package to scrape user agent strings from [useragentstring.com](https://useragentstring.com), including first and last visit dates.
+
+**[View Documentation & EDA](https://benjaminguinaudeau.github.io/useragentstring/)**
 
 ## Installation
 
@@ -63,6 +69,25 @@ chrome_ua <- scrape_browser("Chrome", workers = 8)
 # Disable parallelization
 chrome_ua <- scrape_browser("Chrome", parallel = FALSE)
 ```
+
+## Automated Data Updates
+
+The user agent data is automatically updated **every Sunday at midnight UTC** via GitHub Actions. The workflow:
+
+1. Scrapes all major browsers (Chrome, Firefox, Safari, Opera, Edge, etc.)
+2. Scrapes major crawlers (Googlebot, Bingbot, YandexBot, etc.)
+3. Rebuilds the package website with updated EDA
+4. Commits and pushes changes
+
+You can also manually trigger an update from the [Actions tab](https://github.com/benjaminguinaudeau/useragentstring/actions/workflows/update-data.yml).
+
+## Pre-scraped Data
+
+The package includes pre-scraped datasets in `data/` folder:
+- `chrome.rds`, `firefox.rds`, `safari.rds`, `opera.rds`, `edge.rds`
+- `googlebot.rds`, `bingbot.rds`, `yandexbot.rds`, etc.
+
+Combined CSV available at `user_agents.csv`.
 
 ## License
 

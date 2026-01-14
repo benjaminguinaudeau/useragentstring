@@ -54,7 +54,10 @@
   <main id="main" class="col-md-9"><div class="section level1">
 <div class="page-header"><h1 id="useragentstring">useragentstring<a class="anchor" aria-label="anchor" href="#useragentstring"></a>
 </h1></div>
+<!-- badges: start -->
+
 <p>R package to scrape user agent strings from <a href="https://useragentstring.com" class="external-link">useragentstring.com</a>, including first and last visit dates.</p>
+<p><strong><a href="https://benjaminguinaudeau.github.io/useragentstring/">View Documentation &amp; EDA</a></strong></p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
@@ -144,6 +147,24 @@
 <span><span class="va">chrome_ua</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/scrape_browser.html">scrape_browser</a></span><span class="op">(</span><span class="st">"Chrome"</span>, parallel <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
+<h2 id="automated-data-updates">Automated Data Updates<a class="anchor" aria-label="anchor" href="#automated-data-updates"></a>
+</h2>
+<p>The user agent data is automatically updated <strong>every Sunday at midnight UTC</strong> via GitHub Actions. The workflow:</p>
+<ol style="list-style-type: decimal">
+<li>Scrapes all major browsers (Chrome, Firefox, Safari, Opera, Edge, etc.)</li>
+<li>Scrapes major crawlers (Googlebot, Bingbot, YandexBot, etc.)</li>
+<li>Rebuilds the package website with updated EDA</li>
+<li>Commits and pushes changes</li>
+</ol>
+<p>You can also manually trigger an update from the <a href="https://github.com/benjaminguinaudeau/useragentstring/actions/workflows/update-data.yml" class="external-link">Actions tab</a>.</p>
+</div>
+<div class="section level2">
+<h2 id="pre-scraped-data">Pre-scraped Data<a class="anchor" aria-label="anchor" href="#pre-scraped-data"></a>
+</h2>
+<p>The package includes pre-scraped datasets in <code>data/</code> folder: - <code>chrome.rds</code>, <code>firefox.rds</code>, <code>safari.rds</code>, <code>opera.rds</code>, <code>edge.rds</code> - <code>googlebot.rds</code>, <code>bingbot.rds</code>, <code>yandexbot.rds</code>, etc.</p>
+<p>Combined CSV available at <code>user_agents.csv</code>.</p>
+</div>
+<div class="section level2">
 <h2 id="license">License<a class="anchor" aria-label="anchor" href="#license"></a>
 </h2>
 <p>MIT</p>
@@ -181,7 +202,12 @@
 </ul>
 </div>
 
-
+<div class="dev-status">
+<h2 data-toc-skip>Dev status</h2>
+<ul class="list-unstyled">
+<li><a href="https://github.com/benjaminguinaudeau/useragentstring/actions/workflows/update-data.yml" class="external-link"><img src="https://github.com/benjaminguinaudeau/useragentstring/actions/workflows/update-data.yml/badge.svg" alt="Update Data"></a></li>
+</ul>
+</div>
 
   </aside>
 </div>
@@ -204,4 +230,3 @@
 
   </body>
 </html>
-

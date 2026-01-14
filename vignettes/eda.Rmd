@@ -214,6 +214,174 @@ summary_stats <- all_data |>
 knitr::kable(summary_stats, caption = "Summary Statistics")
 ```
 
+## Rendering Engine Distribution
+
+User agents typically identify their rendering engine. Let's analyze the distribution.
+
+```{r rendering-engine, fig.height=5}
+engine_data <- all_data |>
+  mutate(
+    engine = case_when(
+      str_detect(useragent_string, "Gecko/") ~ "Gecko (Firefox)",
+      str_detect(useragent_string, "AppleWebKit.*Chrome") ~ "Blink (Chrome)",
+      str_detect(useragent_string, "AppleWebKit") ~ "WebKit (Safari)",
+      str_detect(useragent_string, "Trident|MSIE") ~ "Trident (IE)",
+      str_detect(useragent_string, "Presto") ~ "Presto (Opera)",
+      str_detect(useragent_string, "EdgeHTML") ~ "EdgeHTML",
+      TRUE ~ "Other/Unknown"
+    )
+  ) |>
+  count(engine, sort = TRUE) |>
+  mutate(engine = fct_reorder(engine, n))
+
+ggplot(engine_data, aes(x = n, y = engine)) +
+  geom_col(fill = "purple4") +
+  geom_text(aes(label = n), hjust = -0.1, size = 3) +
+  labs(
+    title = "Rendering Engine Distribution",
+    x = "Count",
+    y = NULL
+  ) +
+  theme_minimal() +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.15)))
+```
+
+## Architecture Analysis (32-bit vs 64-bit)
+
+```{r architecture, fig.height=4}
+arch_data <- all_data |>
+  mutate(
+    architecture = case_when(
+      str_detect(useragent_string, "Win64|x64|x86_64|amd64") ~ "64-bit",
+      str_detect(useragent_string, "WOW64") ~ "32-bit on 64-bit",
+      str_detect(useragent_string, "i686|i386|x86") ~ "32-bit",
+      TRUE ~ "Unknown"
+    )
+  ) |>
+  count(architecture, sort = TRUE) |>
+  mutate(architecture = fct_reorder(architecture, n))
+
+ggplot(arch_data, aes(x = n, y = architecture)) +
+  geom_col(fill = "forestgreen") +
+  geom_text(aes(label = n), hjust = -0.1, size = 3) +
+  labs(
+    title = "System Architecture Distribution",
+    x = "Count",
+    y = NULL
+  ) +
+  theme_minimal() +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.15)))
+```
+
+## User Agent Lifespan Analysis
+
+How long do user agents remain active (time between first and last visit)?
+
+```{r lifespan, fig.height=5}
+lifespan_data <- all_data |>
+  filter(!is.na(first_visit), !is.na(last_visit)) |>
+  mutate(
+    lifespan_days = as.numeric(difftime(last_visit, first_visit, units = "days")),
+    lifespan_category = case_when(
+      lifespan_days <= 0 ~ "Same day",
+      lifespan_days <= 7 ~ "1 week",
+      lifespan_days <= 30 ~ "1 month",
+      lifespan_days <= 90 ~ "3 months",
+      lifespan_days <= 365 ~ "1 year",
+      lifespan_days <= 730 ~ "2 years",
+      TRUE ~ "2+ years"
+    )
+  ) |>
+  mutate(lifespan_category = factor(lifespan_category,
+    levels = c("Same day", "1 week", "1 month", "3 months", "1 year", "2 years", "2+ years")))
+
+ggplot(lifespan_data, aes(x = lifespan_category)) +
+  geom_bar(fill = "coral") +
+  labs(
+    title = "User Agent Lifespan Distribution",
+    subtitle = "Time between first and last visit",
+    x = "Lifespan",
+    y = "Count"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+## Mobile vs Desktop
+
+```{r mobile-desktop, fig.height=4}
+device_data <- all_data |>
+  mutate(
+    device_type = case_when(
+      str_detect(useragent_string, "Mobile|Android|iPhone|iPad|iPod|webOS|BlackBerry|Opera Mini|Opera Mobi") ~ "Mobile",
+      str_detect(useragent_string, regex("bot|crawler|spider|slurp", ignore_case = TRUE)) ~ "Bot/Crawler",
+      TRUE ~ "Desktop"
+    )
+  ) |>
+  count(device_type, sort = TRUE) |>
+  mutate(
+    pct = n / sum(n) * 100,
+    label = paste0(device_type, "\n", round(pct, 1), "%")
+  )
+
+ggplot(device_data, aes(x = "", y = n, fill = device_type)) +
+  geom_col(width = 1) +
+  coord_polar("y") +
+  geom_text(aes(label = label), position = position_stack(vjust = 0.5), size = 4) +
+  labs(title = "Device Type Distribution") +
+  theme_void() +
+  theme(legend.position = "none") +
+  scale_fill_brewer(palette = "Set2")
+```
+
+## Version Trends for Top Browsers
+
+```{r version-trends, fig.height=6}
+# Get major version for top browsers
+version_trends <- all_data |>
+  filter(browser %in% c("Chrome", "Firefox", "Safari", "Opera")) |>
+  filter(!is.na(first_visit)) |>
+  mutate(
+    major_version = as.numeric(str_extract(version, "^\\d+")),
+    year = year(first_visit)
+  ) |>
+  filter(!is.na(major_version), year >= 2015) |>
+  group_by(browser, year) |>
+  summarise(
+    avg_version = mean(major_version, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+ggplot(version_trends, aes(x = year, y = avg_version, color = browser)) +
+  geom_line(linewidth = 1.2) +
+  geom_point(size = 2) +
+  labs(
+    title = "Average Browser Version Over Time",
+    subtitle = "Major version number by year of first appearance",
+    x = "Year",
+    y = "Average Major Version",
+    color = "Browser"
+  ) +
+  theme_minimal() +
+  scale_color_brewer(palette = "Set1")
+```
+
+## Data Freshness
+
+```{r data-freshness}
+freshness <- all_data |>
+  summarise(
+    last_scrape = max(last_visit, na.rm = TRUE),
+    newest_ua_first_seen = max(first_visit, na.rm = TRUE),
+    total_records = n()
+  )
+
+cat("Data last updated:", format(Sys.Date(), "%Y-%m-%d"), "\n")
+cat("Most recent last_visit in data:", format(freshness$last_scrape, "%Y-%m-%d %H:%M"), "\n")
+cat("Newest user agent first seen:", format(freshness$newest_ua_first_seen, "%Y-%m-%d %H:%M"), "\n")
+cat("Total records:", freshness$total_records, "\n")
+```
+
 ## Data Export
 
 The full dataset can be exported for further analysis:

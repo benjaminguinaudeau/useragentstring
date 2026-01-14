@@ -1,0 +1,80 @@
+name: Update User Agent Data
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'  # Every Sunday at midnight UTC
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev libfontconfig1-dev libharfbuzz-dev libfribidi-dev libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev
+
+      - name: Install R dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::pkgdown, any::devtools
+          needs: website
+
+      - name: Run scraper
+        run: |
+          Rscript -e '
+          devtools::load_all()
+
+          # Browsers to scrape
+          browsers <- c("Chrome", "Safari", "Opera", "Firefox", "Edge",
+                        "Maxthon", "Konqueror", "Netscape")
+
+          # Crawlers to scrape
+          crawlers <- c("Googlebot", "Bingbot", "YandexBot", "Baiduspider", "msnbot")
+
+          # Scrape each and save
+          for (name in c(browsers, crawlers)) {
+            cat("Scraping:", name, "\n")
+            result <- tryCatch({
+              scrape_browser(name, parallel = TRUE, workers = 2)
+            }, error = function(e) {
+              cat("Error:", e$message, "\n")
+              NULL
+            })
+
+            if (!is.null(result) && nrow(result) > 0) {
+              filename <- paste0("data/", tolower(gsub(" ", "_", name)), ".rds")
+              saveRDS(result, filename)
+              cat("Saved", nrow(result), "entries to", filename, "\n")
+            }
+          }
+
+          # Combine all data into CSV
+          data_files <- list.files("data", pattern = "\\.rds$", full.names = TRUE)
+          all_data <- lapply(data_files, readRDS) |> dplyr::bind_rows()
+          write.csv(all_data, "user_agents.csv", row.names = FALSE)
+          cat("Total entries:", nrow(all_data), "\n")
+          '
+
+      - name: Build pkgdown site
+        run: |
+          Rscript -e 'pkgdown::build_site()'
+
+      - name: Commit and push changes
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --staged --quiet || git commit -m "Update user agent data [automated]"
+          git push
