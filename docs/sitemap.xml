@@ -3,12 +3,21 @@
 <url><loc>https://benjaminguinaudeau.github.io/useragentstring/LICENSE-text.html</loc></url>
 <url><loc>https://benjaminguinaudeau.github.io/useragentstring/articles/eda.html</loc></url>
 <url><loc>https://benjaminguinaudeau.github.io/useragentstring/articles/index.html</loc></url>
+<url><loc>https://benjaminguinaudeau.github.io/useragentstring/articles/scraping-useragents.html</loc></url>
 <url><loc>https://benjaminguinaudeau.github.io/useragentstring/authors.html</loc></url>
 <url><loc>https://benjaminguinaudeau.github.io/useragentstring/index.html</loc></url>
+<url><loc>https://benjaminguinaudeau.github.io/useragentstring/reference/blocked_content_patterns.html</loc></url>
+<url><loc>https://benjaminguinaudeau.github.io/useragentstring/reference/blocked_status_codes.html</loc></url>
+<url><loc>https://benjaminguinaudeau.github.io/useragentstring/reference/calculate_blocking_score.html</loc></url>
+<url><loc>https://benjaminguinaudeau.github.io/useragentstring/reference/default_test_sites.html</loc></url>
+<url><loc>https://benjaminguinaudeau.github.io/useragentstring/reference/detect_blocking.html</loc></url>
 <url><loc>https://benjaminguinaudeau.github.io/useragentstring/reference/get_all_categories.html</loc></url>
 <url><loc>https://benjaminguinaudeau.github.io/useragentstring/reference/get_browser_links.html</loc></url>
 <url><loc>https://benjaminguinaudeau.github.io/useragentstring/reference/get_useragent_details.html</loc></url>
 <url><loc>https://benjaminguinaudeau.github.io/useragentstring/reference/index.html</loc></url>
+<url><loc>https://benjaminguinaudeau.github.io/useragentstring/reference/run_blocking_test.html</loc></url>
 <url><loc>https://benjaminguinaudeau.github.io/useragentstring/reference/scrape_browser.html</loc></url>
+<url><loc>https://benjaminguinaudeau.github.io/useragentstring/reference/test_ua_all_sites.html</loc></url>
+<url><loc>https://benjaminguinaudeau.github.io/useragentstring/reference/test_user_agent.html</loc></url>
 </urlset>
 

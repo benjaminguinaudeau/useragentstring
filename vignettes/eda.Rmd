@@ -55,9 +55,20 @@ if (file.exists(csv_file)) {
   csv_data <- NULL
 }
 
-# Combine all RDS data
+# Combine all RDS data (ensure consistent date types)
 if (length(data_files) > 0) {
-  rds_data <- lapply(data_files, readRDS) |> bind_rows()
+  rds_list <- lapply(data_files, function(f) {
+    d <- readRDS(f)
+    # Ensure dates are POSIXct
+    if (!is.null(d$first_visit) && !inherits(d$first_visit, "POSIXct")) {
+      d$first_visit <- as.POSIXct(d$first_visit)
+    }
+    if (!is.null(d$last_visit) && !inherits(d$last_visit, "POSIXct")) {
+      d$last_visit <- as.POSIXct(d$last_visit)
+    }
+    d
+  })
+  rds_data <- bind_rows(rds_list)
 } else {
   rds_data <- NULL
 }

@@ -18,6 +18,7 @@ articles:
   navbar: ~
   contents:
   - eda
+  - scraping-useragents
 
 reference:
 - title: Scraping Functions
@@ -26,3 +27,12 @@ reference:
   - get_useragent_details
   - scrape_browser
   - get_all_categories
+
+- title: Blocking Test Functions
+  contents:
+  - default_test_sites
+  - detect_blocking
+  - test_user_agent
+  - test_ua_all_sites
+  - calculate_blocking_score
+  - run_blocking_test
