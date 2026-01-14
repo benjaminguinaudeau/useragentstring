@@ -1,0 +1,25 @@
+Package: useragentstring
+Title: Scrape User Agent Strings from useragentstring.com
+Version: 0.1.0
+Authors@R:
+    person("Benjamin", "Guinaudeau", email = "benjamin.guinaudeau@gmail.com", role = c("aut", "cre"))
+Description: Scrape user agent strings with first and last visit dates from
+    useragentstring.com. Supports parallel scraping for faster data collection.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
+Imports:
+    httr2,
+    rvest,
+    dplyr,
+    tidyr,
+    purrr,
+    stringr,
+    furrr,
+    future,
+    cli,
+    tibble
+Suggests:
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
