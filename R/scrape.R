@@ -190,3 +190,66 @@ scrape_browser <- function(browser, parallel = TRUE, workers = 4, limit = NULL) 
 
   results_df
 }
+
+#' Get all available browser/crawler categories from useragentstring.com
+#'
+#' @return A tibble with columns: name (browser/crawler name), category (CRAWLERS, BROWSERS, etc.)
+#' @export
+#' @examples
+#' \dontrun{
+#' categories <- get_all_categories()
+#' head(categories)
+#' }
+get_all_categories <- function() {
+  base_url <- "https://useragentstring.com"
+  url <- paste0(base_url, "/pages/useragentstring.php")
+
+  resp <- httr2::request(url) |>
+    httr2::req_headers("User-Agent" = "R useragentstring package") |>
+    httr2::req_perform()
+
+  html <- httr2::resp_body_html(resp)
+
+  # Get all links in document order
+  all_a_tags <- html |> rvest::html_elements("a")
+  all_hrefs <- all_a_tags |> rvest::html_attr("href")
+  all_texts <- all_a_tags |> rvest::html_text()
+  all_classes <- all_a_tags |> rvest::html_attr("class")
+
+  # Build a data frame preserving document order
+  all_links <- tibble::tibble(
+    idx = seq_along(all_hrefs),
+    href = all_hrefs,
+    text = stringr::str_trim(all_texts),
+    class = all_classes
+  )
+
+  # Identify category headers
+  cat_rows <- all_links |>
+    dplyr::filter(.data$class == "unterMenuTitel") |>
+    dplyr::select(cat_idx = "idx", category = "text")
+
+  # Identify browser/crawler links
+  browser_rows <- all_links |>
+    dplyr::filter(
+      !is.na(.data$href),
+      stringr::str_detect(.data$href, "^/pages/.+/"),
+      is.na(.data$class) | .data$class != "unterMenuTitel",
+      !.data$text %in% c("Home", "List of User Agent Strings", "Links", "", "ALL"),
+      !stringr::str_detect(.data$href, "Crawlerlist|Browserlist|unknown|useragentstring\\.php|links\\.php")
+    )
+
+  # Assign category based on element order (find most recent category header before each link)
+  browser_rows <- browser_rows |>
+    dplyr::mutate(
+      category = purrr::map_chr(.data$idx, function(i) {
+        valid_cats <- cat_rows$cat_idx[cat_rows$cat_idx < i]
+        if (length(valid_cats) == 0) return("Unknown")
+        cat_rows$category[cat_rows$cat_idx == max(valid_cats)]
+      })
+    ) |>
+    dplyr::select(name = "text", "category") |>
+    dplyr::distinct()
+
+  browser_rows
+}

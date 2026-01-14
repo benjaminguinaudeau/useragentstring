@@ -1,0 +1,223 @@
+---
+title: "Exploratory Data Analysis of User Agent Strings"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Exploratory Data Analysis of User Agent Strings}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 8,
+  fig.height = 5,
+  message = FALSE,
+  warning = FALSE
+)
+```
+
+```{r load-packages}
+library(dplyr)
+library(ggplot2)
+library(forcats)
+library(lubridate)
+library(scales)
+library(tidyr)
+library(stringr)
+```
+
+## Loading the Data
+
+We have scraped user agent data from useragentstring.com for various browsers and crawlers. Let's load and combine all the datasets.
+
+```{r load-data}
+# Load all RDS files from data folder
+data_files <- list.files(
+  system.file("extdata", package = "useragentstring"),
+  pattern = "\\.rds$",
+  full.names = TRUE
+)
+
+# If running locally during development
+if (length(data_files) == 0) {
+  data_files <- list.files("../data", pattern = "\\.rds$", full.names = TRUE)
+}
+
+# Also load the CSV if available
+csv_file <- "../user_agents.csv"
+if (file.exists(csv_file)) {
+  csv_data <- read.csv(csv_file)
+  csv_data$first_visit <- as.POSIXct(csv_data$first_visit)
+  csv_data$last_visit <- as.POSIXct(csv_data$last_visit)
+} else {
+  csv_data <- NULL
+}
+
+# Combine all RDS data
+if (length(data_files) > 0) {
+  rds_data <- lapply(data_files, readRDS) |> bind_rows()
+} else {
+  rds_data <- NULL
+}
+
+# Combine everything
+all_data <- bind_rows(csv_data, rds_data) |>
+  distinct(useragent_string, .keep_all = TRUE)
+
+cat("Total unique user agents:", nrow(all_data), "\n")
+```
+
+## Overview by Browser
+
+```{r browser-counts, fig.height=6}
+browser_counts <- all_data |>
+  count(browser, sort = TRUE) |>
+  mutate(browser = fct_reorder(browser, n))
+
+ggplot(browser_counts, aes(x = n, y = browser)) +
+  geom_col(fill = "steelblue") +
+  geom_text(aes(label = n), hjust = -0.1, size = 3) +
+  labs(
+    title = "User Agent Count by Browser/Crawler",
+    x = "Number of User Agents",
+    y = NULL
+  ) +
+  theme_minimal() +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.15)))
+```
+
+## Timeline Analysis
+
+### First Visit Distribution
+
+When were these user agents first seen on the web?
+
+```{r first-visit-timeline, fig.height=5}
+timeline_data <- all_data |>
+  filter(!is.na(first_visit)) |>
+  mutate(first_visit_year = year(first_visit))
+
+ggplot(timeline_data, aes(x = first_visit)) +
+  geom_histogram(bins = 50, fill = "steelblue", color = "white") +
+  labs(
+    title = "Distribution of First Visit Dates",
+    x = "First Visit Date",
+    y = "Count"
+  ) +
+  theme_minimal() +
+  scale_x_datetime(date_labels = "%Y", date_breaks = "2 years")
+```
+
+### First Visit by Browser
+
+```{r first-visit-by-browser, fig.height=6}
+top_browsers <- browser_counts |>
+  slice_max(n, n = 8) |>
+  pull(browser)
+
+timeline_by_browser <- all_data |>
+  filter(!is.na(first_visit), browser %in% top_browsers) |>
+  mutate(first_visit_year = year(first_visit))
+
+ggplot(timeline_by_browser, aes(x = first_visit, fill = browser)) +
+  geom_histogram(bins = 30, color = "white", alpha = 0.7) +
+  facet_wrap(~browser, scales = "free_y", ncol = 2) +
+  labs(
+    title = "First Visit Timeline by Browser",
+    x = "First Visit Date",
+    y = "Count"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  scale_x_datetime(date_labels = "%Y")
+```
+
+## Activity Analysis
+
+### Most Recently Seen User Agents
+
+```{r recent-ua}
+recent_ua <- all_data |>
+  filter(!is.na(last_visit)) |>
+  arrange(desc(last_visit)) |>
+  select(browser, version, last_visit, useragent_string) |>
+  head(10)
+
+knitr::kable(recent_ua, caption = "10 Most Recently Seen User Agents")
+```
+
+### Oldest User Agents Still Active
+
+```{r oldest-active}
+oldest_active <- all_data |>
+  filter(!is.na(first_visit), !is.na(last_visit)) |>
+  mutate(age_days = as.numeric(difftime(last_visit, first_visit, units = "days"))) |>
+  filter(age_days > 0) |>
+  arrange(first_visit) |>
+  select(browser, version, first_visit, last_visit, age_days) |>
+  head(10)
+
+knitr::kable(oldest_active, caption = "10 Oldest User Agents (by First Visit)")
+```
+
+## User Agent String Patterns
+
+### Operating System Distribution
+
+```{r os-distribution, fig.height=5}
+os_patterns <- all_data |>
+  mutate(
+    os = case_when(
+      str_detect(useragent_string, "Windows NT 10") ~ "Windows 10/11",
+      str_detect(useragent_string, "Windows NT 6\\.3") ~ "Windows 8.1",
+      str_detect(useragent_string, "Windows NT 6\\.2") ~ "Windows 8",
+      str_detect(useragent_string, "Windows NT 6\\.1") ~ "Windows 7",
+      str_detect(useragent_string, "Windows NT 6\\.0") ~ "Windows Vista",
+      str_detect(useragent_string, "Windows NT 5") ~ "Windows XP/2000",
+      str_detect(useragent_string, "Windows") ~ "Windows (Other)",
+      str_detect(useragent_string, "Mac OS X") ~ "macOS",
+      str_detect(useragent_string, "Linux") ~ "Linux",
+      str_detect(useragent_string, "Android") ~ "Android",
+      str_detect(useragent_string, "iPhone|iPad") ~ "iOS",
+      TRUE ~ "Other/Unknown"
+    )
+  ) |>
+  count(os, sort = TRUE) |>
+  mutate(os = fct_reorder(os, n))
+
+ggplot(os_patterns, aes(x = n, y = os)) +
+  geom_col(fill = "darkorange") +
+  geom_text(aes(label = n), hjust = -0.1, size = 3) +
+  labs(
+    title = "Operating System Distribution in User Agents",
+    x = "Count",
+    y = NULL
+  ) +
+  theme_minimal() +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.15)))
+```
+
+## Summary Statistics
+
+```{r summary-stats}
+summary_stats <- all_data |>
+  summarise(
+    total_user_agents = n(),
+    browsers_crawlers = n_distinct(browser),
+    earliest_first_visit = min(first_visit, na.rm = TRUE),
+    latest_last_visit = max(last_visit, na.rm = TRUE),
+    pct_with_dates = mean(!is.na(first_visit) | !is.na(last_visit)) * 100
+  )
+
+knitr::kable(summary_stats, caption = "Summary Statistics")
+```
+
+## Data Export
+
+The full dataset can be exported for further analysis:
+```r
+# Save combined data
+write.csv(all_data, "useragent_data.csv", row.names = FALSE)
+```

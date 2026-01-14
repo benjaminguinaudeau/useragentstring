@@ -1,0 +1,28 @@
+url: https://benjaminguinaudeau.github.io/useragentstring/
+
+template:
+  bootstrap: 5
+  bootswatch: flatly
+
+navbar:
+  structure:
+    left: [intro, reference, articles]
+    right: [search, github]
+  components:
+    github:
+      icon: fab fa-github
+      href: https://github.com/benjaminguinaudeau/useragentstring
+
+articles:
+- title: Articles
+  navbar: ~
+  contents:
+  - eda
+
+reference:
+- title: Scraping Functions
+  contents:
+  - get_browser_links
+  - get_useragent_details
+  - scrape_browser
+  - get_all_categories

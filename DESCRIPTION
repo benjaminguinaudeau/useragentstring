@@ -8,7 +8,7 @@ Description: Scrape user agent strings with first and last visit dates from
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.3
 Imports:
     httr2,
     rvest,
@@ -21,5 +21,15 @@ Imports:
     cli,
     tibble
 Suggests:
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown,
+    ggplot2,
+    scales,
+    forcats,
+    lubridate,
+    pkgdown
 Config/testthat/edition: 3
+VignetteBuilder: knitr
+URL: https://benjaminguinaudeau.github.io/useragentstring/, https://github.com/benjaminguinaudeau/useragentstring
+BugReports: https://github.com/benjaminguinaudeau/useragentstring/issues
